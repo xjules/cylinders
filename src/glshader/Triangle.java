@@ -1,18 +1,19 @@
 package glshader;
+import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.DebugGL4bc;
-import com.jogamp.opengl.GL2.*;
+import static com.jogamp.opengl.GL2.*;
 import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.GL.*;
+import static com.jogamp.opengl.GL.*;
 import com.jogamp.opengl.GL;
-import static com.jogamp.opengl.GL.GL_DEPTH_TEST;
-import static com.jogamp.opengl.GL.GL_FRONT_AND_BACK;
 import static com.jogamp.opengl.GL3.GL_MAX_GEOMETRY_OUTPUT_COMPONENTS;
 import static com.jogamp.opengl.GL3.GL_PROGRAM_POINT_SIZE;
 import static com.jogamp.opengl.GL3ES3.GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS;
 import static com.jogamp.opengl.GL3ES3.GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS;
 import static com.jogamp.opengl.GL3ES3.GL_MAX_SHADER_STORAGE_BLOCK_SIZE;
 import static com.jogamp.opengl.GL3ES3.GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS;
+import static com.jogamp.opengl.GL3ES3.GL_SHADER_STORAGE_BUFFER;
 import com.jogamp.opengl.GL4;
+import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.GL4bc;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
@@ -23,7 +24,12 @@ import static com.jogamp.opengl.fixedfunc.GLLightingFunc.GL_AMBIENT_AND_DIFFUSE;
 import static com.jogamp.opengl.fixedfunc.GLLightingFunc.GL_COLOR_MATERIAL;
 import static com.jogamp.opengl.fixedfunc.GLLightingFunc.GL_LIGHT0;
 import static com.jogamp.opengl.fixedfunc.GLLightingFunc.GL_LIGHTING;
+import java.io.IOException;
+import java.nio.FloatBuffer;
+import java.util.List;
 import javax.swing.JFrame; 
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
 /**
@@ -34,6 +40,11 @@ import javax.vecmath.Vector4f;
 public class Triangle implements GLEventListener {
     
         private Vector4f[] mCurvePoints=null;
+        private Point3f eye = new Point3f(0, 0, 25);
+        private Point3f center = new Point3f(0, 0, 24);
+        private int tubeProgram;
+        private final GLU glu = new GLU();
+        private List<Vector3f> mPoints=null;
 
 	public static void main(String[] args) {
         
@@ -66,6 +77,14 @@ public class Triangle implements GLEventListener {
        
     @Override
     public void init(GLAutoDrawable drawable) {
+        
+        //load points
+        try {
+            mPoints = Utils.loadLigandTraj("/resources/ligand.txt");
+        } catch(IOException ex) {
+            System.err.println("couldn't find ligand file");
+        }
+        
     	GL4bc gl = new DebugGL4bc(drawable.getGL().getGL4bc());
         
         // set OpenGL global state
@@ -97,6 +116,16 @@ public class Triangle implements GLEventListener {
         System.out.println("Extension GL_ARB_compute_variable_group_size: " + available);
         available = gl.isExtensionAvailable("GL_INTEL_fragment_shader_ordering");
         System.out.println("Extension GL_INTEL_fragment_shader_ordering: " + available);
+        //load shader
+        try {
+            
+//            hashProgram = Utils.loadComputeProgram(gl, "/resources/shaders/hash.glsl");
+            tubeProgram = Utils.loadProgram(gl, "/esources/shaders/polygon2.vert",
+                    "/resources/shaders/polygon2.geom", "/resources/shaders/polygon2.frag");
+        } catch (IOException e) {
+            System.err.println("Resource loading failed. " + e.getMessage());
+            System.exit(1);
+        }
     }
 
     @Override
@@ -110,8 +139,15 @@ public class Triangle implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
         
         // clear the window
-        // By default color is black
-        gl.glClear(GL.GL_COLOR_BUFFER_BIT);
+        gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        
+        // Set look at matrix
+	gl.glLoadIdentity();
+	glu.gluLookAt(eye.x, eye.y, eye.z,
+		center.x, center.y, center.z,
+		0, 1, 0);
         
         //By default vertex colors are white
         gl.glBegin(GL2.GL_TRIANGLES);
@@ -129,5 +165,13 @@ public class Triangle implements GLEventListener {
             int height) {
            
     }
+    
+    void updateLigandBuffer() {
+        gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomsBuffer);
+        gl.glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, atomPos.length * Buffers.SIZEOF_FLOAT, FloatBuffer.wrap(atomPos));
+        gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+    
+     
 
 }

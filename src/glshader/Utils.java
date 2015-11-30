@@ -184,6 +184,31 @@ public class Utils {
         }
     }
     
+    public static List<Vector3f> loadLigandTraj(String filename) throws IOException {
+        InputStream is = Utils.class.getResourceAsStream(filename);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+//            Map<Integer, Vector3f> pos = new HashMap<>();
+            List<Vector3f> pos = new ArrayList<>();
+            String line;
+            // read out the header
+            reader.readLine();
+            while ((line = reader.readLine()) != null) {
+                String[] columns = line.split(",");
+                try {
+                    
+                    float x = Float.parseFloat(columns[1]);
+                    float y = Float.parseFloat(columns[2]);
+                    float z = Float.parseFloat(columns[3]);
+                    pos.add(new Vector3f(x,y,z));
+                    System.out.printf(new Vector3f(x,y,z).toString());
+                } catch (NumberFormatException e) {
+                    System.err.printf("no position data", columns);
+                }
+            }
+            return pos;
+        }
+    }
+    
     public static Map<String, Float> loadVDWRadii(String filename) throws IOException {
         InputStream is = Utils.class.getResourceAsStream(filename);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
