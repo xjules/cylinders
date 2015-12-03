@@ -40,6 +40,8 @@ import javax.vecmath.Vector4f;
 public class Triangle implements GLEventListener {
     
         private Vector4f[] mCurvePoints=null;
+        private int mLigandBuffer;
+        
         private Point3f eye = new Point3f(0, 0, 25);
         private Point3f center = new Point3f(0, 0, 24);
         private int tubeProgram;
@@ -126,6 +128,12 @@ public class Triangle implements GLEventListener {
             System.err.println("Resource loading failed. " + e.getMessage());
             System.exit(1);
         }
+        
+        //buffers
+        int buffers[] = new int[2];
+        gl.glGenBuffers(2, buffers, 0);
+        // contour-buildup
+        mLigandBuffer = buffers[0];
     }
 
     @Override
@@ -149,6 +157,8 @@ public class Triangle implements GLEventListener {
 		center.x, center.y, center.z,
 		0, 1, 0);
         
+        gl.glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mLigandBuffer);
+        
         //By default vertex colors are white
         gl.glBegin(GL2.GL_TRIANGLES);
         {
@@ -166,9 +176,17 @@ public class Triangle implements GLEventListener {
            
     }
     
-    void updateLigandBuffer() {
-        gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomsBuffer);
-        gl.glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, atomPos.length * Buffers.SIZEOF_FLOAT, FloatBuffer.wrap(atomPos));
+    void updateLigandBuffer(GL4 gl) {
+        FloatBuffer pos = FloatBuffer.allocate(mCurvePoints.length*4);
+        for (int i = 0; i < mCurvePoints.length; i++) {
+            pos.put(mCurvePoints[i].x);
+            pos.put(mCurvePoints[i].y);
+            pos.put(mCurvePoints[i].z);
+            pos.put(mCurvePoints[i].w);
+        }
+        pos.rewind();
+        gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLigandBuffer);
+        gl.glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, pos.capacity() * Buffers.SIZEOF_FLOAT, pos);
         gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
     
