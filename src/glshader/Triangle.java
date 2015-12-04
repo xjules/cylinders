@@ -134,6 +134,8 @@ public class Triangle implements GLEventListener {
         gl.glGenBuffers(2, buffers, 0);
         // contour-buildup
         mLigandBuffer = buffers[0];
+        
+        Utils.bindShaderStorageBlock(gl, tubeProgram, "ligands", 0);
     }
 
     @Override
@@ -159,6 +161,7 @@ public class Triangle implements GLEventListener {
         
         gl.glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mLigandBuffer);
         
+        gl.glUseProgram(tubeProgram);
         //By default vertex colors are white
         gl.glBegin(GL2.GL_TRIANGLES);
         {
