@@ -16,7 +16,7 @@ out VertexData {
 } vertex;
 
 void main() {
-    uint index = gl_GlobalInvocationID.x;
+    uint index = uint(gl_VertexID);
     vec4 pos = positions[index].xyzw;
     gl_Position = pos;
 }

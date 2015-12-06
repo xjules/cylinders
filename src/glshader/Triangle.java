@@ -122,7 +122,7 @@ public class Triangle implements GLEventListener {
         try {
             
 //            hashProgram = Utils.loadComputeProgram(gl, "/resources/shaders/hash.glsl");
-            tubeProgram = Utils.loadProgram(gl, "/esources/shaders/polygon2.vert",
+            tubeProgram = Utils.loadProgram(gl, "/resources/shaders/polygon2.vert",
                     "/resources/shaders/polygon2.geom", "/resources/shaders/polygon2.frag");
         } catch (IOException e) {
             System.err.println("Resource loading failed. " + e.getMessage());
@@ -160,6 +160,7 @@ public class Triangle implements GLEventListener {
 		0, 1, 0);
         
         gl.glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mLigandBuffer);
+
         
         gl.glUseProgram(tubeProgram);
         //By default vertex colors are white
